@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.36324.18
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FACTOVA_Launcher", "FACTOVA_Launcher.csproj", "{B5E8F2A3-2E4B-4A1C-8A2D-5D7E3C4B3A17}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "FACTOVA_Launcher_Installer", "..\FACTOVA_Launcher_Installer\FACTOVA_Launcher_Installer.vdproj", "{2E7D6A63-3333-4066-9219-284B7D3872C2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B5E8F2A3-2E4B-4A1C-8A2D-5D7E3C4B3A17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5E8F2A3-2E4B-4A1C-8A2D-5D7E3C4B3A17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5E8F2A3-2E4B-4A1C-8A2D-5D7E3C4B3A17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5E8F2A3-2E4B-4A1C-8A2D-5D7E3C4B3A17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E7D6A63-3333-4066-9219-284B7D3872C2}.Debug|Any CPU.ActiveCfg = Debug
+		{2E7D6A63-3333-4066-9219-284B7D3872C2}.Release|Any CPU.ActiveCfg = Release
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {63F4BF3E-7A64-4FE8-8848-16CEC85460E3}
+	EndGlobalSection
+EndGlobal
