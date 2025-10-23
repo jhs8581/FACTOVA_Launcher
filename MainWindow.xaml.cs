@@ -416,7 +416,7 @@ namespace FACTOVA_Launcher
                         Name = dirName, 
                         Content = buttonContent, 
                         Tag = dirName,
-                        Style = (Style)FindResource("ModernButtonStyle")
+                        Style = (Style)FindResource("NormalModeLargeButtonStyle")
                     };
                     normalBtn.Click += LaunchButton_Click;
                     NormalButtonContainer.Children.Add(normalBtn);
@@ -473,7 +473,12 @@ namespace FACTOVA_Launcher
                 this.Foreground = Brushes.White;
                 NormalModeView.Visibility = Visibility.Collapsed;
                 DevModeTabControl.Visibility = Visibility.Visible;
-                // 개발자 모드 진입 시, 선택된 탭에 따라 로그박스 가시성 초기 설정
+                
+                this.Width = 400;
+                this.SizeToContent = SizeToContent.Height;
+                Grid mainGrid = (Grid)((Border)this.Content).Child;
+                mainGrid.RowDefinitions[1].Height = new GridLength(1, GridUnitType.Star);
+                
                 if (DevModeTabControl.SelectedItem == SettingsTab)
                 {
                     LogTextBox.Visibility = Visibility.Collapsed;
@@ -491,9 +496,17 @@ namespace FACTOVA_Launcher
                 this.Foreground = Brushes.Black;
                 NormalModeView.Visibility = Visibility.Visible;
                 DevModeTabControl.Visibility = Visibility.Collapsed;
-                LogTextBox.Visibility = Visibility.Visible; // 일반 모드에서는 항상 로그박스 표시
-                LogViewerRow.Height = new GridLength(120);
+                
+                LogTextBox.Visibility = Visibility.Visible;
+                LogViewerRow.Height = new GridLength(60);
+                
+                this.Width = 800;
+                this.SizeToContent = SizeToContent.Height;
+                Grid mainGrid = (Grid)((Border)this.Content).Child;
+                mainGrid.RowDefinitions[1].Height = GridLength.Auto;
             }
+            
+            LoadBusinessUnitButtons();
         }
 
         private void TitleTextBlock_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="FACTOVA 실행기" 
         Icon="image/FACTOVA_Launcher.png"
-        SizeToContent="Height" MinHeight="400" Width="380"
+        SizeToContent="Height" Width="800"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Loaded="Window_Loaded"
@@ -22,50 +22,82 @@
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#AA000000" BlurRadius="10" ShadowDepth="2" Direction="270" Opacity="0.4"/>
-                </Setter.Value>
-            </Setter>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" 
-                                CornerRadius="20"
-                                Padding="{TemplateBinding Padding}">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                                    <GradientStop Color="#8B8B8B" Offset="0.0" />
-                                    <GradientStop Color="#6B6B6B" Offset="1.0" />
-                                </LinearGradientBrush>
-                            </Border.Background>
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
+                        <Grid>
+                            <!-- Shadow Layer -->
+                            <Border x:Name="shadow" 
+                                    CornerRadius="20"
+                                    Margin="0,0,0,3"
+                                    Padding="{TemplateBinding Padding}">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                        <GradientStop Color="#4B4B4B" Offset="0.0" />
+                                        <GradientStop Color="#2B2B2B" Offset="1.0" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.Effect>
+                                    <BlurEffect Radius="3"/>
+                                </Border.Effect>
+                            </Border>
+                            <!-- Main Button -->
+                            <Border x:Name="border" 
+                                    CornerRadius="20"
+                                    Padding="{TemplateBinding Padding}">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                        <GradientStop Color="#9B9B9B" Offset="0.0" />
+                                        <GradientStop Color="#7B7B7B" Offset="0.5" />
+                                        <GradientStop Color="#5B5B5B" Offset="1.0" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" BlurRadius="8" ShadowDepth="3" Direction="270" Opacity="0.4"/>
+                                </Border.Effect>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="border" Property="Background">
                                     <Setter.Value>
                                         <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                                            <GradientStop Color="#9B9B9B" Offset="0.0" />
-                                            <GradientStop Color="#7B7B7B" Offset="1.0" />
+                                            <GradientStop Color="#ABABAB" Offset="0.0" />
+                                            <GradientStop Color="#8B8B8B" Offset="0.5" />
+                                            <GradientStop Color="#6B6B6B" Offset="1.0" />
                                         </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#000000" BlurRadius="12" ShadowDepth="4" Direction="270" Opacity="0.5"/>
                                     </Setter.Value>
                                 </Setter>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Margin" Value="0,2,0,0"/>
+                                <Setter TargetName="shadow" Property="Visibility" Value="Collapsed"/>
                                 <Setter TargetName="border" Property="Background">
                                     <Setter.Value>
                                         <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                                            <GradientStop Color="#5B5B5B" Offset="0.0" />
-                                            <GradientStop Color="#4B4B4B" Offset="1.0" />
+                                            <GradientStop Color="#4B4B4B" Offset="0.0" />
+                                            <GradientStop Color="#5B5B5B" Offset="0.5" />
+                                            <GradientStop Color="#6B6B6B" Offset="1.0" />
                                         </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#000000" BlurRadius="4" ShadowDepth="1" Direction="270" Opacity="0.3"/>
                                     </Setter.Value>
                                 </Setter>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="border" Property="Background" Value="#D0D0D0"/>
+                                <Setter TargetName="shadow" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="border" Property="Effect" Value="{x:Null}"/>
                                 <Setter Property="Foreground" Value="#808080"/>
-                                <Setter Property="Effect" Value="{x:Null}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -73,47 +105,91 @@
             </Setter>
         </Style>
 
+        <!-- Large Button Style for Normal Mode - LG Gray with bigger font -->
+        <Style x:Key="NormalModeLargeButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+            <Setter Property="FontSize" Value="36"/>
+            <Setter Property="Padding" Value="30,20"/>
+            <Setter Property="Margin" Value="10"/>
+        </Style>
+
         <!-- BackupButtonStyle based on ModernButtonStyle - LG Red -->
         <Style x:Key="BackupButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" 
-                                CornerRadius="20"
-                                Padding="{TemplateBinding Padding}">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                                    <GradientStop Color="#C01F48" Offset="0.0" />
-                                    <GradientStop Color="#A50034" Offset="1.0" />
-                                </LinearGradientBrush>
-                            </Border.Background>
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
+                        <Grid>
+                            <!-- Shadow Layer -->
+                            <Border x:Name="shadow" 
+                                    CornerRadius="20"
+                                    Margin="0,0,0,3"
+                                    Padding="{TemplateBinding Padding}">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                        <GradientStop Color="#750014" Offset="0.0" />
+                                        <GradientStop Color="#550004" Offset="1.0" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.Effect>
+                                    <BlurEffect Radius="3"/>
+                                </Border.Effect>
+                            </Border>
+                            <!-- Main Button -->
+                            <Border x:Name="border" 
+                                    CornerRadius="20"
+                                    Padding="{TemplateBinding Padding}">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                        <GradientStop Color="#D02F58" Offset="0.0" />
+                                        <GradientStop Color="#B51044" Offset="0.5" />
+                                        <GradientStop Color="#950024" Offset="1.0" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" BlurRadius="8" ShadowDepth="3" Direction="270" Opacity="0.4"/>
+                                </Border.Effect>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="border" Property="Background">
                                     <Setter.Value>
                                         <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                                            <GradientStop Color="#D02F58" Offset="0.0" />
-                                            <GradientStop Color="#B51044" Offset="1.0" />
+                                            <GradientStop Color="#E03F68" Offset="0.0" />
+                                            <GradientStop Color="#C52054" Offset="0.5" />
+                                            <GradientStop Color="#A51034" Offset="1.0" />
                                         </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#000000" BlurRadius="12" ShadowDepth="4" Direction="270" Opacity="0.5"/>
                                     </Setter.Value>
                                 </Setter>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Margin" Value="0,2,0,0"/>
+                                <Setter TargetName="shadow" Property="Visibility" Value="Collapsed"/>
                                 <Setter TargetName="border" Property="Background">
                                     <Setter.Value>
                                         <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                                            <GradientStop Color="#950024" Offset="0.0" />
-                                            <GradientStop Color="#850014" Offset="1.0" />
+                                            <GradientStop Color="#850014" Offset="0.0" />
+                                            <GradientStop Color="#950024" Offset="0.5" />
+                                            <GradientStop Color="#A50034" Offset="1.0" />
                                         </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#000000" BlurRadius="4" ShadowDepth="1" Direction="270" Opacity="0.3"/>
                                     </Setter.Value>
                                 </Setter>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="border" Property="Background" Value="#D0D0D0"/>
+                                <Setter TargetName="shadow" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="border" Property="Effect" Value="{x:Null}"/>
                                 <Setter Property="Foreground" Value="#808080"/>
-                                <Setter Property="Effect" Value="{x:Null}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -126,42 +202,79 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" 
-                                CornerRadius="20"
-                                Padding="{TemplateBinding Padding}">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                                    <GradientStop Color="#A8B8CC" Offset="0.0" />
-                                    <GradientStop Color="#8898AC" Offset="1.0" />
-                                </LinearGradientBrush>
-                            </Border.Background>
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
+                        <Grid>
+                            <!-- Shadow Layer -->
+                            <Border x:Name="shadow" 
+                                    CornerRadius="20"
+                                    Margin="0,0,0,3"
+                                    Padding="{TemplateBinding Padding}">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                        <GradientStop Color="#58687C" Offset="0.0" />
+                                        <GradientStop Color="#38485C" Offset="1.0" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.Effect>
+                                    <BlurEffect Radius="3"/>
+                                </Border.Effect>
+                            </Border>
+                            <!-- Main Button -->
+                            <Border x:Name="border" 
+                                    CornerRadius="20"
+                                    Padding="{TemplateBinding Padding}">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                        <GradientStop Color="#C8D8EC" Offset="0.0" />
+                                        <GradientStop Color="#A8B8CC" Offset="0.5" />
+                                        <GradientStop Color="#8898AC" Offset="1.0" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" BlurRadius="8" ShadowDepth="3" Direction="270" Opacity="0.4"/>
+                                </Border.Effect>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="border" Property="Background">
                                     <Setter.Value>
                                         <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                                            <GradientStop Color="#B8C8DC" Offset="0.0" />
+                                            <GradientStop Color="#D8E8FC" Offset="0.0" />
+                                            <GradientStop Color="#B8C8DC" Offset="0.5" />
                                             <GradientStop Color="#98A8BC" Offset="1.0" />
                                         </LinearGradientBrush>
                                     </Setter.Value>
                                 </Setter>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#000000" BlurRadius="12" ShadowDepth="4" Direction="270" Opacity="0.5"/>
+                                    </Setter.Value>
+                                </Setter>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Margin" Value="0,2,0,0"/>
+                                <Setter TargetName="shadow" Property="Visibility" Value="Collapsed"/>
                                 <Setter TargetName="border" Property="Background">
                                     <Setter.Value>
                                         <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                                            <GradientStop Color="#8898AC" Offset="0.0" />
-                                            <GradientStop Color="#68788C" Offset="1.0" />
+                                            <GradientStop Color="#68788C" Offset="0.0" />
+                                            <GradientStop Color="#8898AC" Offset="0.5" />
+                                            <GradientStop Color="#98A8BC" Offset="1.0" />
                                         </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#000000" BlurRadius="4" ShadowDepth="1" Direction="270" Opacity="0.3"/>
                                     </Setter.Value>
                                 </Setter>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="border" Property="Background" Value="#D0D0D0"/>
+                                <Setter TargetName="shadow" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="border" Property="Effect" Value="{x:Null}"/>
                                 <Setter Property="Foreground" Value="#808080"/>
-                                <Setter Property="Effect" Value="{x:Null}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -201,7 +314,7 @@
             <Grid Grid.Row="1">
                 <!-- Normal Mode View -->
                 <ScrollViewer x:Name="NormalModeView" VerticalScrollBarVisibility="Auto">
-                    <UniformGrid x:Name="NormalButtonContainer" Columns="2" />
+                    <UniformGrid x:Name="NormalButtonContainer" Columns="3" />
                 </ScrollViewer>
 
                 <!-- Developer Mode Tab View -->
@@ -282,14 +395,12 @@
                                     </StackPanel>
                                 </GroupBox>
 
-                                <!-- 추가된 부분 -->
                                 <GroupBox x:Name="FeaturesGroupBox" Header="기능" Margin="0,10">
                                     <UniformGrid Rows="1" Margin="5">
                                         <Button x:Name="AddFolderButton" Content="폴더 추가" Margin="0,0,5,0" Click="AddFolderButton_Click"/>
                                         <Button x:Name="OpenFolderButton" Content="문서 바로가기" Margin="5,0,0,0" Click="OpenFolderButton_Click"/>
                                     </UniformGrid>
                                 </GroupBox>
-                                <!-- 여기까지 -->
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,15,0,5">

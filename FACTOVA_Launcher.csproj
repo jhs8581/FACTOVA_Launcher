@@ -33,6 +33,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>FACTOVA_Launcher.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -110,6 +113,12 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="image\FACTOVA_Launcher.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="image\FACTOVA_Launcher.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="FACTOVA_Launcher.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
