@@ -120,5 +120,8 @@
   <ItemGroup>
     <Resource Include="FACTOVA_Launcher.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="NormalButtonRightClick.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

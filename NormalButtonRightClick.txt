@@ -1,0 +1,33 @@
+
+        private void NormalButton_RightClick(object sender, MouseButtonEventArgs e)
+        {
+            Button clickedButton = sender as Button;
+            if (clickedButton == null) return;
+            string businessUnit = clickedButton.Tag.ToString();
+
+            try
+            {
+                string lgeSettingsDir = GetLgeSettingsDir();
+                string configFileName = GetConfigFileName();
+                string sourcePath = Path.Combine(lgeSettingsDir, configFileName);
+                string destPath = Path.Combine(lgeSettingsDir, businessUnit, configFileName);
+
+                if (!File.Exists(sourcePath))
+                {
+                    Log("BackupError", "Source file not found: " + sourcePath);
+                    MessageBox.Show(GetLocalizedString("BackupError", "Source file not found: " + sourcePath), "Backup Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                File.Copy(sourcePath, destPath, true);
+                Log("BackupCompleted", businessUnit);
+                MessageBox.Show(GetLocalizedString("BackupCompleted", businessUnit), "Backup", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Log("BackupError", ex.Message);
+                MessageBox.Show(GetLocalizedString("BackupError", ex.Message), "Backup Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+}

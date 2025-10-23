@@ -419,6 +419,7 @@ namespace FACTOVA_Launcher
                         Style = (Style)FindResource("NormalModeLargeButtonStyle")
                     };
                     normalBtn.Click += LaunchButton_Click;
+                    normalBtn.MouseRightButtonDown += NormalButton_RightClick;
                     NormalButtonContainer.Children.Add(normalBtn);
 
                     Button devLoadBtn = new Button 
@@ -920,6 +921,54 @@ namespace FACTOVA_Launcher
             var logEntry = new LogEntry(messageKey, args);
             logEntries.Add(logEntry);
             RenderLog(logEntry);
+        }
+
+        private void NormalButton_RightClick(object sender, MouseButtonEventArgs e)
+        {
+            Button clickedButton = sender as Button;
+            if (clickedButton == null) return;
+            
+            e.Handled = true;
+            
+            string businessUnit = clickedButton.Tag.ToString();
+            string buttonText = clickedButton.Content.ToString().Replace("__", "_");
+            
+            ContextMenu contextMenu = new ContextMenu();
+            MenuItem backupMenuItem = new MenuItem
+            {
+                Header = GetLocalizedString("BackupButtonFormat", buttonText),
+                Tag = businessUnit
+            };
+            backupMenuItem.Click += (s, args) =>
+            {
+                try
+                {
+                    string lgeSettingsDir = GetLgeSettingsDir();
+                    string configFileName = GetConfigFileName();
+                    string sourcePath = Path.Combine(lgeSettingsDir, configFileName);
+                    string destPath = Path.Combine(lgeSettingsDir, businessUnit, configFileName);
+
+                    if (!File.Exists(sourcePath))
+                    {
+                        Log("BackupError", "Source file not found: " + sourcePath);
+                        MessageBox.Show(GetLocalizedString("BackupError", "Source file not found: " + sourcePath), "Backup Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    File.Copy(sourcePath, destPath, true);
+                    Log("BackupCompleted", businessUnit);
+                    MessageBox.Show(GetLocalizedString("BackupCompleted", businessUnit), "Backup", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    Log("BackupError", ex.Message);
+                    MessageBox.Show(GetLocalizedString("BackupError", ex.Message), "Backup Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            };
+            
+            contextMenu.Items.Add(backupMenuItem);
+            clickedButton.ContextMenu = contextMenu;
+            contextMenu.IsOpen = true;
         }
     }
 }
