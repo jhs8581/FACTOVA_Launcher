@@ -23,6 +23,7 @@ namespace FACTOVA_Launcher
         public string GmesVersion { get; set; } = "GMES2";
         public Dictionary<string, string> CustomUrlMappings { get; set; } = new Dictionary<string, string>();
         public int ButtonFontSize { get; set; } = 30;
+        public bool AutoBackupEnabled { get; set; } = true; // 기본값: 자동 백업 활성화
     }
 
     public partial class MainWindow : Window
@@ -80,6 +81,7 @@ namespace FACTOVA_Launcher
                 { "Language", new Dictionary<string, string> { { "ko-KR", "언어" }, { "en-US", "Language" } } },
                 { "StartupSettings", new Dictionary<string, string> { { "ko-KR", "시작 설정" }, { "en-US", "Startup Settings" } } },
                 { "StartInDevMode", new Dictionary<string, string> { { "ko-KR", "시작 시 개발자 모드로 진입" }, { "en-US", "Start in Developer Mode" } } },
+                { "AutoBackupEnabled", new Dictionary<string, string> { { "ko-KR", "프로그램 종료 시 자동 백업" }, { "en-US", "Auto Backup on Program Exit" } } },
                 { "Features", new Dictionary<string, string> { { "ko-KR", "Config 폴더" }, { "en-US", "Config Folder" } } },
                 { "AddFolder", new Dictionary<string, string> { { "ko-KR", "폴더 추가" }, { "en-US", "Add Folder" } } },
                 { "OpenFolder", new Dictionary<string, string> { { "ko-KR", "Config 폴더 바로가기" }, { "en-US", "Open Config Folder" } } },
@@ -93,6 +95,7 @@ namespace FACTOVA_Launcher
                 { "ExplorerOpenError", new Dictionary<string, string> { { "ko-KR", "탐색기 열기 오류: {0}" }, { "en-US", "Error opening explorer: {0}" } } },
                 { "AppStarted", new Dictionary<string, string> { { "ko-KR", "프로그램이 시작되었습니다." }, { "en-US", "Program started." } } },
                 { "BackupCompleted", new Dictionary<string, string> { { "ko-KR", "설정 백업 완료: {0}" }, { "en-US", "Settings backup completed: {0}" } } },
+                { "AutoBackupCompleted", new Dictionary<string, string> { { "ko-KR", "자동 백업 완료: {0}" }, { "en-US", "Auto backup completed: {0}" } } },
                 { "BackupError", new Dictionary<string, string> { { "ko-KR", "설정 파일 백업 오류: {0}" }, { "en-US", "Settings backup error: {0}" } } },
                 { "LauncherReset", new Dictionary<string, string> { { "ko-KR", "런처가 초기 상태로 돌아갑니다." }, { "en-US", "Launcher is reset to initial state." } } },
                 { "InvalidFolderName", new Dictionary<string, string> { { "ko-KR", "[경고] 잘못된 폴더 이름은 건너뜁니다: {0}" }, { "en-US", "[Warning] Skipping invalid folder name: {0}" } } },
@@ -243,6 +246,7 @@ namespace FACTOVA_Launcher
             LanguageGroupBox.Header = GetLocalizedString("Language");
             StartupGroupBox.Header = GetLocalizedString("StartupSettings");
             DevModeOnStartupCheck.Content = GetLocalizedString("StartInDevMode");
+            AutoBackupCheck.Content = GetLocalizedString("AutoBackupEnabled");
             FeaturesGroupBox.Header = GetLocalizedString("Features");
             AddFolderButton.Content = GetLocalizedString("AddFolder");
             OpenFolderButton.Content = GetLocalizedString("OpenFolder");
@@ -258,6 +262,7 @@ namespace FACTOVA_Launcher
                 LangEngRadio.IsChecked = true;
             }
             DevModeOnStartupCheck.IsChecked = settings.StartInDevMode;
+            AutoBackupCheck.IsChecked = settings.AutoBackupEnabled;
             
             // 폰트 크기 표시 업데이트
             if (FontSizeTextBlock != null)
@@ -300,7 +305,11 @@ namespace FACTOVA_Launcher
                 }
                 else if (_isMainAppRunning && !isProcessRunning)
                 {
-                    BackupSettings();
+                    // 자동 백업 설정이 활성화되어 있을 때만 자동 백업 실행
+                    if (settings.AutoBackupEnabled)
+                    {
+                        BackupSettings();
+                    }
                     ResetLauncherState();
                 }
             }
@@ -322,7 +331,7 @@ namespace FACTOVA_Launcher
                 if (File.Exists(sourcePath))
                 {
                     File.Copy(sourcePath, destPath, true);
-                    Log("BackupCompleted", _currentUnitCode);
+                    Log("AutoBackupCompleted", _currentUnitCode);
                 }
             }
             catch (Exception ex)
@@ -626,6 +635,17 @@ namespace FACTOVA_Launcher
             }
         }
 
+        private void AutoBackup_Changed(object sender, RoutedEventArgs e)
+        {
+            if (settings == null) return;
+            bool newSetting = AutoBackupCheck.IsChecked == true;
+            if (settings.AutoBackupEnabled != newSetting)
+            {
+                settings.AutoBackupEnabled = newSetting;
+                SaveSettings();
+            }
+        }
+
         private void GmesVersion_Changed(object sender, RoutedEventArgs e)
         {
             if (settings == null) return;
@@ -899,8 +919,8 @@ namespace FACTOVA_Launcher
                     {
                         // Default behavior: use first part before underscore
                         urlUnitCode = unitCode.Split('_')[0];
-                    }
-                    
+                      }
+
                     string newUrl = $"http://{urlUnitCode.ToLower()}.gmes2.lge.com:8085";
                     deploymentUrlElement.SetAttributeValue("value", newUrl);
                     doc.Save(updaterConfigPath);
@@ -928,36 +948,6 @@ namespace FACTOVA_Launcher
                 Log("ExecutionError", ex.Message);
                 MessageBox.Show(GetLocalizedString("ExecutionError", ex.Message), "실행 오류", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-        private void RenderLog(LogEntry logEntry)
-        {
-            try
-            {
-                string message = GetLocalizedString(logEntry.MessageKey, logEntry.Args);
-                Paragraph p = new Paragraph(new Run($"[{logEntry.Timestamp:HH:mm:ss.fff}] {message}"));
-                p.Margin = new Thickness(0);
-
-                LogTextBox.Document.Blocks.Add(p);
-                LogTextBox.ScrollToEnd();
-            }
-            catch { }
-        }
-
-        private void RenderAllLogs()
-        {
-            LogTextBox.Document.Blocks.Clear();
-            foreach (var logEntry in logEntries)
-            {
-                RenderLog(logEntry);
-            }
-        }
-
-        private void Log(string messageKey, params object[] args)
-        {
-            var logEntry = new LogEntry(messageKey, args);
-            logEntries.Add(logEntry);
-            RenderLog(logEntry);
         }
 
         private void NormalButton_RightClick(object sender, MouseButtonEventArgs e)
@@ -1046,6 +1036,36 @@ namespace FACTOVA_Launcher
             
             clickedButton.ContextMenu = contextMenu;
             contextMenu.IsOpen = true;
+        }
+
+        private void RenderLog(LogEntry logEntry)
+        {
+            try
+            {
+                string message = GetLocalizedString(logEntry.MessageKey, logEntry.Args);
+                Paragraph p = new Paragraph(new Run($"[{logEntry.Timestamp:HH:mm:ss.fff}] {message}"));
+                p.Margin = new Thickness(0);
+
+                LogTextBox.Document.Blocks.Add(p);
+                LogTextBox.ScrollToEnd();
+            }
+            catch { }
+        }
+
+        private void RenderAllLogs()
+        {
+            LogTextBox.Document.Blocks.Clear();
+            foreach (var logEntry in logEntries)
+            {
+                RenderLog(logEntry);
+            }
+        }
+
+        private void Log(string messageKey, params object[] args)
+        {
+            var logEntry = new LogEntry(messageKey, args);
+            logEntries.Add(logEntry);
+            RenderLog(logEntry);
         }
 
         private void FontSizeIncrease_Click(object sender, RoutedEventArgs e)

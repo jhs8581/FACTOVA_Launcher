@@ -385,7 +385,10 @@
                                     </StackPanel>
                                 </GroupBox>
                                 <GroupBox x:Name="StartupGroupBox" Margin="0,10">
-                                    <CheckBox x:Name="DevModeOnStartupCheck" Content="Start in Developer Mode" Margin="5" Checked="DevModeStartup_Changed" Unchecked="DevModeStartup_Changed"/>
+                                    <StackPanel Margin="5">
+                                        <CheckBox x:Name="DevModeOnStartupCheck" Content="Start in Developer Mode" Margin="0,0,0,5" Checked="DevModeStartup_Changed" Unchecked="DevModeStartup_Changed"/>
+                                        <CheckBox x:Name="AutoBackupCheck" Content="Auto Backup on Program Exit" Margin="0,0,0,0" Checked="AutoBackup_Changed" Unchecked="AutoBackup_Changed"/>
+                                    </StackPanel>
                                 </GroupBox>
 
                                 <GroupBox x:Name="GmesVersionGroupBox" Header="GMES 버전" Margin="0,10">
