@@ -21,6 +21,8 @@ namespace FACTOVA_Launcher
         public bool StartInDevMode { get; set; } = false;
         public string ConfigPath { get; set; }
         public string GmesVersion { get; set; } = "GMES2";
+        public Dictionary<string, string> CustomUrlMappings { get; set; } = new Dictionary<string, string>();
+        public int ButtonFontSize { get; set; } = 30;
     }
 
     public partial class MainWindow : Window
@@ -110,7 +112,12 @@ namespace FACTOVA_Launcher
                 { "UnauthorizedAccess", new Dictionary<string, string> { { "ko-KR", "권한 부족. 관리자 권한으로 실행 필요." }, { "en-US", "Permission denied. Please run as administrator." } } },
                 { "ExecutionError", new Dictionary<string, string> { { "ko-KR", "실행 오류: {0}" }, { "en-US", "Execution error: {0}" } } },
                 { "ProcessMonitorError", new Dictionary<string, string> { { "ko-KR", "프로세스 모니터링 오류: {0}" }, { "en-US", "Process monitoring error: {0}" } } },
-                { "LauncherResetError", new Dictionary<string, string> { { "ko-KR", "런처 상태 초기화 오류: {0}" }, { "en-US", "Launcher reset error: {0}" } } }
+                { "LauncherResetError", new Dictionary<string, string> { { "ko-KR", "런처 상태 초기화 오류: {0}" }, { "en-US", "Launcher reset error: {0}" } } },
+                { "CustomizeUrl", new Dictionary<string, string> { { "ko-KR", "URL 커스터마이징" }, { "en-US", "Customize URL" } } },
+                { "EnterUrlCode", new Dictionary<string, string> { { "ko-KR", "URL에 사용할 코드를 입력하세요 (예: ac, kc):" }, { "en-US", "Enter URL code (e.g., ac, kc):" } } },
+                { "UrlCustomized", new Dictionary<string, string> { { "ko-KR", "URL이 '{0}'(으)로 설정되었습니다." }, { "en-US", "URL set to '{0}'." } } },
+                { "CurrentUrl", new Dictionary<string, string> { { "ko-KR", "현재 URL: {0}" }, { "en-US", "Current URL: {0}" } } },
+                { "FontSize", new Dictionary<string, string> { { "ko-KR", "폰트" }, { "en-US", "Font Size" } } }
             };
         }
 
@@ -179,6 +186,16 @@ namespace FACTOVA_Launcher
                 {
                     settings.GmesVersion = "GMES2";
                 }
+                
+                if (settings.CustomUrlMappings == null)
+                {
+                    settings.CustomUrlMappings = new Dictionary<string, string>();
+                }
+                
+                if (settings.ButtonFontSize == 0)
+                {
+                    settings.ButtonFontSize = 30;
+                }
 
                 string expectedPath = GetDefaultPathForVersion(settings.GmesVersion);
                 if (settings.ConfigPath != expectedPath)
@@ -230,6 +247,7 @@ namespace FACTOVA_Launcher
             AddFolderButton.Content = GetLocalizedString("AddFolder");
             OpenFolderButton.Content = GetLocalizedString("OpenFolder");
             GmesVersionGroupBox.Header = GetLocalizedString("GmesVersion");
+            FontSizeGroupBox.Header = GetLocalizedString("FontSize");
 
             if (settings.Language == "ko-KR")
             {
@@ -240,6 +258,12 @@ namespace FACTOVA_Launcher
                 LangEngRadio.IsChecked = true;
             }
             DevModeOnStartupCheck.IsChecked = settings.StartInDevMode;
+            
+            // 폰트 크기 표시 업데이트
+            if (FontSizeTextBlock != null)
+            {
+                FontSizeTextBlock.Text = settings.ButtonFontSize.ToString();
+            }
         }
 
         private void SetupMonitorTimer()
@@ -416,7 +440,8 @@ namespace FACTOVA_Launcher
                         Name = dirName, 
                         Content = buttonContent, 
                         Tag = dirName,
-                        Style = (Style)FindResource("NormalModeLargeButtonStyle")
+                        Style = (Style)FindResource("NormalModeLargeButtonStyle"),
+                        FontSize = settings.ButtonFontSize
                     };
                     normalBtn.Click += LaunchButton_Click;
                     normalBtn.MouseRightButtonDown += NormalButton_RightClick;
@@ -863,7 +888,19 @@ namespace FACTOVA_Launcher
                 XElement deploymentUrlElement = doc.Descendants("appSettings").Elements("add").FirstOrDefault(el => el.Attribute("key")?.Value == "DeploymentURL");
                 if (deploymentUrlElement != null)
                 {
-                    string urlUnitCode = unitCode.Split('_')[0];
+                    string urlUnitCode;
+                    
+                    // Check if custom URL mapping exists
+                    if (settings.CustomUrlMappings != null && settings.CustomUrlMappings.ContainsKey(unitCode))
+                    {
+                        urlUnitCode = settings.CustomUrlMappings[unitCode];
+                    }
+                    else
+                    {
+                        // Default behavior: use first part before underscore
+                        urlUnitCode = unitCode.Split('_')[0];
+                    }
+                    
                     string newUrl = $"http://{urlUnitCode.ToLower()}.gmes2.lge.com:8085";
                     deploymentUrlElement.SetAttributeValue("value", newUrl);
                     doc.Save(updaterConfigPath);
@@ -934,6 +971,8 @@ namespace FACTOVA_Launcher
             string buttonText = clickedButton.Content.ToString().Replace("__", "_");
             
             ContextMenu contextMenu = new ContextMenu();
+            
+            // 백업 메뉴 항목
             MenuItem backupMenuItem = new MenuItem
             {
                 Header = GetLocalizedString("BackupButtonFormat", buttonText),
@@ -966,9 +1005,75 @@ namespace FACTOVA_Launcher
                 }
             };
             
+            // URL 커스터마이징 메뉴 항목
+            string currentUrlCode = "";
+            if (settings.CustomUrlMappings != null && settings.CustomUrlMappings.ContainsKey(businessUnit))
+            {
+                currentUrlCode = settings.CustomUrlMappings[businessUnit];
+            }
+            else
+            {
+                currentUrlCode = businessUnit.Split('_')[0];
+            }
+            
+            MenuItem customizeUrlMenuItem = new MenuItem
+            {
+                Header = GetLocalizedString("CustomizeUrl") + " " + GetLocalizedString("CurrentUrl", currentUrlCode.ToLower()),
+                Tag = businessUnit
+            };
+            customizeUrlMenuItem.Click += (s, args) =>
+            {
+                var dialog = new InputBoxRich(this, GetLocalizedString("CustomizeUrl"), currentUrlCode, false);
+                if (dialog.ShowDialog() == true)
+                {
+                    string newUrlCode = dialog.ResponseText.Trim();
+                    if (!string.IsNullOrWhiteSpace(newUrlCode))
+                    {
+                        if (settings.CustomUrlMappings == null)
+                        {
+                            settings.CustomUrlMappings = new Dictionary<string, string>();
+                        }
+                        settings.CustomUrlMappings[businessUnit] = newUrlCode;
+                        SaveSettings();
+                        MessageBox.Show(GetLocalizedString("UrlCustomized", newUrlCode.ToLower()), "URL Customization", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }
+            };
+            
             contextMenu.Items.Add(backupMenuItem);
+            contextMenu.Items.Add(new Separator());
+            contextMenu.Items.Add(customizeUrlMenuItem);
+            
             clickedButton.ContextMenu = contextMenu;
             contextMenu.IsOpen = true;
+        }
+
+        private void FontSizeIncrease_Click(object sender, RoutedEventArgs e)
+        {
+            if (settings.ButtonFontSize < 72)
+            {
+                settings.ButtonFontSize++;
+                FontSizeTextBlock.Text = settings.ButtonFontSize.ToString();
+                SaveSettings();
+                if (!isDevMode)
+                {
+                    LoadBusinessUnitButtons();
+                }
+            }
+        }
+
+        private void FontSizeDecrease_Click(object sender, RoutedEventArgs e)
+        {
+            if (settings.ButtonFontSize > 8)
+            {
+                settings.ButtonFontSize--;
+                FontSizeTextBlock.Text = settings.ButtonFontSize.ToString();
+                SaveSettings();
+                if (!isDevMode)
+                {
+                    LoadBusinessUnitButtons();
+                }
+            }
         }
     }
 }
