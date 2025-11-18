@@ -120,7 +120,9 @@ namespace FACTOVA_Launcher
                 { "EnterUrlCode", new Dictionary<string, string> { { "ko-KR", "URL에 사용할 코드를 입력하세요 (예: ac, kc):" }, { "en-US", "Enter URL code (e.g., ac, kc):" } } },
                 { "UrlCustomized", new Dictionary<string, string> { { "ko-KR", "URL이 '{0}'(으)로 설정되었습니다." }, { "en-US", "URL set to '{0}'." } } },
                 { "CurrentUrl", new Dictionary<string, string> { { "ko-KR", "현재 URL: {0}" }, { "en-US", "Current URL: {0}" } } },
-                { "FontSize", new Dictionary<string, string> { { "ko-KR", "폰트" }, { "en-US", "Font Size" } } }
+                { "FontSize", new Dictionary<string, string> { { "ko-KR", "폰트" }, { "en-US", "Font Size" } } },
+                { "DirectLaunch", new Dictionary<string, string> { { "ko-KR", "백업 없이 바로 실행" }, { "en-US", "Launch Without Backup" } } },
+                { "DirectLaunchCompleted", new Dictionary<string, string> { { "ko-KR", "백업 없이 실행: {0}" }, { "en-US", "Launched without backup: {0}" } } }
             };
         }
 
@@ -852,6 +854,16 @@ namespace FACTOVA_Launcher
 
         private void LaunchForBusinessUnit(string unitCode)
         {
+            LaunchForBusinessUnit(unitCode, true);
+        }
+
+        private void LaunchWithoutBackup(string unitCode)
+        {
+            LaunchForBusinessUnit(unitCode, false);
+        }
+
+        private void LaunchForBusinessUnit(string unitCode, bool loadConfig)
+        {
             try
             {
                 if (settings.GmesVersion == "GMES1" && !isDevMode)
@@ -898,37 +910,52 @@ namespace FACTOVA_Launcher
                 string updaterConfigPath = Path.Combine(updaterDir, "FACTOVA.Updater.exe.config");
                 string updaterExePath = Path.Combine(updaterDir, "FACTOVA.Updater.exe");
 
-                if (!File.Exists(updaterConfigPath) || !File.Exists(sourcePath) || !File.Exists(updaterExePath))
+                if (!File.Exists(updaterConfigPath) || !File.Exists(updaterExePath))
                 {
-                    MessageBox.Show("필요한 파일(업데이터 또는 설정)을 찾을 수 없습니다. 경로를 확인하세요.", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("필요한 파일(업데이터)을 찾을 수 없습니다. 경로를 확인하세요.", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                XDocument doc = XDocument.Load(updaterConfigPath);
-                XElement deploymentUrlElement = doc.Descendants("appSettings").Elements("add").FirstOrDefault(el => el.Attribute("key")?.Value == "DeploymentURL");
-                if (deploymentUrlElement != null)
+                // Config 파일 로드 여부에 따라 처리
+                if (loadConfig)
                 {
-                    string urlUnitCode;
-                    
-                    // Check if custom URL mapping exists
-                    if (settings.CustomUrlMappings != null && settings.CustomUrlMappings.ContainsKey(unitCode))
+                    if (!File.Exists(sourcePath))
                     {
-                        urlUnitCode = settings.CustomUrlMappings[unitCode];
+                        MessageBox.Show("필요한 파일(설정)을 찾을 수 없습니다. 경로를 확인하세요.", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
                     }
-                    else
+
+                    XDocument doc = XDocument.Load(updaterConfigPath);
+                    XElement deploymentUrlElement = doc.Descendants("appSettings").Elements("add").FirstOrDefault(el => el.Attribute("key")?.Value == "DeploymentURL");
+                    if (deploymentUrlElement != null)
                     {
-                        // Default behavior: use first part before underscore
-                        urlUnitCode = unitCode.Split('_')[0];
-                      }
+                        string urlUnitCode;
+                        
+                        // Check if custom URL mapping exists
+                        if (settings.CustomUrlMappings != null && settings.CustomUrlMappings.ContainsKey(unitCode))
+                        {
+                            urlUnitCode = settings.CustomUrlMappings[unitCode];
+                        }
+                        else
+                        {
+                            // Default behavior: use first part before underscore
+                            urlUnitCode = unitCode.Split('_')[0];
+                        }
 
-                    string newUrl = $"http://{urlUnitCode.ToLower()}.gmes2.lge.com:8085";
-                    deploymentUrlElement.SetAttributeValue("value", newUrl);
-                    doc.Save(updaterConfigPath);
-                    Log("UpdaterConfigChanged", urlUnitCode.ToUpper());
+                        string newUrl = $"http://{urlUnitCode.ToLower()}.gmes2.lge.com:8085";
+                        deploymentUrlElement.SetAttributeValue("value", newUrl);
+                        doc.Save(updaterConfigPath);
+                        Log("UpdaterConfigChanged", urlUnitCode.ToUpper());
+                    }
+
+                    File.Copy(sourcePath, destPath, true);
+                    Log("JsonCopyCompleted", unitCode);
                 }
-
-                File.Copy(sourcePath, destPath, true);
-                Log("JsonCopyCompleted", unitCode);
+                else
+                {
+                    // 백업 없이 실행 - 현재 Config를 그대로 사용
+                    Log("DirectLaunchCompleted", unitCode);
+                }
 
                 Process.Start(new ProcessStartInfo { FileName = updaterExePath, WorkingDirectory = updaterDir });
                 Log("LaunchApp");
@@ -961,6 +988,18 @@ namespace FACTOVA_Launcher
             string buttonText = clickedButton.Content.ToString().Replace("__", "_");
             
             ContextMenu contextMenu = new ContextMenu();
+            
+            // 백업 없이 실행 메뉴 항목
+            MenuItem directLaunchMenuItem = new MenuItem
+            {
+                Header = GetLocalizedString("DirectLaunch"),
+                Tag = businessUnit,
+                FontWeight = FontWeights.Bold
+            };
+            directLaunchMenuItem.Click += (s, args) =>
+            {
+                LaunchWithoutBackup(businessUnit);
+            };
             
             // 백업 메뉴 항목
             MenuItem backupMenuItem = new MenuItem
@@ -1030,6 +1069,8 @@ namespace FACTOVA_Launcher
                 }
             };
             
+            contextMenu.Items.Add(directLaunchMenuItem);
+            contextMenu.Items.Add(new Separator());
             contextMenu.Items.Add(backupMenuItem);
             contextMenu.Items.Add(new Separator());
             contextMenu.Items.Add(customizeUrlMenuItem);
