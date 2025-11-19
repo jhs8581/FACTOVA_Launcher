@@ -390,13 +390,11 @@ namespace FACTOVA_Launcher
 
         private bool IsValidName(string name)
         {
+            // Windows에서 허용하지 않는 문자만 체크
             if (string.IsNullOrWhiteSpace(name)) return false;
-            if (!char.IsLetter(name[0]) && name[0] != '_') return false;
-            for (int i = 1; i < name.Length; i++)
-            {
-                if (!char.IsLetterOrDigit(name[i]) && name[i] != '_') return false;
-            }
-            return true;
+            
+            char[] invalidChars = Path.GetInvalidFileNameChars();
+            return !name.Any(c => invalidChars.Contains(c));
         }
 
         private void LoadBusinessUnitButtons()
@@ -447,9 +445,12 @@ namespace FACTOVA_Launcher
                     string buttonContent = buttonNameMappings.ContainsKey(dirName) ? buttonNameMappings[dirName] : dirName;
                     buttonContent = buttonContent.Replace("_", "__");
 
+                    // 안전한 버튼 이름 생성 (GUID 사용)
+                    string safeName = "Btn_" + Guid.NewGuid().ToString("N");
+
                     Button normalBtn = new Button 
                     { 
-                        Name = dirName, 
+                        Name = safeName, 
                         Content = buttonContent, 
                         Tag = dirName,
                         Style = (Style)FindResource("NormalModeLargeButtonStyle"),
@@ -461,7 +462,7 @@ namespace FACTOVA_Launcher
 
                     Button devLoadBtn = new Button 
                     { 
-                        Name = "DevLoad_" + dirName, 
+                        Name = "DevLoad_" + Guid.NewGuid().ToString("N"), 
                         Content = buttonContent, 
                         Tag = dirName,
                         Style = (Style)FindResource("ModernButtonStyle")
@@ -471,7 +472,7 @@ namespace FACTOVA_Launcher
 
                     Button backupBtn = new Button 
                     { 
-                        Name = "Backup_" + dirName, 
+                        Name = "Backup_" + Guid.NewGuid().ToString("N"), 
                         Content = GetLocalizedString("BackupButtonFormat", buttonContent), 
                         Tag = dirName,
                         Style = (Style)FindResource("BackupButtonStyle")
@@ -936,18 +937,16 @@ namespace FACTOVA_Launcher
                         if (settings.CustomUrlMappings != null && settings.CustomUrlMappings.ContainsKey(unitCode))
                         {
                             newUrl = settings.CustomUrlMappings[unitCode];
-                            Log("UpdaterConfigChanged", newUrl);
                         }
                         else
                         {
-                            // Default behavior: use first part before underscore
-                            string urlUnitCode = unitCode.Split('_')[0];
-                            newUrl = $"http://{urlUnitCode.ToLower()}.gmes2.lge.com:8085";
-                            Log("UpdaterConfigChanged", urlUnitCode.ToUpper());
+                            // 기본값: 폴더명 전체를 사용
+                            newUrl = $"http://{unitCode.ToLower()}.gmes2.lge.com:8085";
                         }
 
                         deploymentUrlElement.SetAttributeValue("value", newUrl);
                         doc.Save(updaterConfigPath);
+                        Log("UpdaterConfigChanged", newUrl);
                     }
 
                     File.Copy(sourcePath, destPath, true);
@@ -1037,25 +1036,25 @@ namespace FACTOVA_Launcher
             };
             
             // URL 커스터마이징 메뉴 항목
-            string currentUrlCode = "";
+            string currentUrl = "";
             if (settings.CustomUrlMappings != null && settings.CustomUrlMappings.ContainsKey(businessUnit))
             {
-                currentUrlCode = settings.CustomUrlMappings[businessUnit];
+                currentUrl = settings.CustomUrlMappings[businessUnit];
             }
             else
             {
-                string defaultCode = businessUnit.Split('_')[0];
-                currentUrlCode = $"http://{defaultCode.ToLower()}.gmes2.lge.com:8085";
+                // 기본값: 폴더명 전체를 사용
+                currentUrl = $"http://{businessUnit.ToLower()}.gmes2.lge.com:8085";
             }
             
             MenuItem customizeUrlMenuItem = new MenuItem
             {
-                Header = GetLocalizedString("CustomizeUrl"),
+                Header = $"{GetLocalizedString("CustomizeUrl")} ({currentUrl})",
                 Tag = businessUnit
             };
             customizeUrlMenuItem.Click += (s, args) =>
             {
-                var dialog = new InputBoxRich(this, GetLocalizedString("EnterFullUrl"), currentUrlCode, false);
+                var dialog = new InputBoxRich(this, GetLocalizedString("EnterFullUrl"), currentUrl, false);
                 if (dialog.ShowDialog() == true)
                 {
                     string newUrl = dialog.ResponseText.Trim();

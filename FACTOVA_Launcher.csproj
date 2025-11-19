@@ -93,11 +93,14 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Include=".github\workflows\release.yml" />
     <None Include="App.config" />
     <None Include="packages.config" />
     <None Include="PatchNotes.md">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="README.md" />
+    <None Include="RELEASE.md" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="image\icon_128.ico" />
