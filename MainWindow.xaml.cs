@@ -118,6 +118,7 @@ namespace FACTOVA_Launcher
                 { "LauncherResetError", new Dictionary<string, string> { { "ko-KR", "런처 상태 초기화 오류: {0}" }, { "en-US", "Launcher reset error: {0}" } } },
                 { "CustomizeUrl", new Dictionary<string, string> { { "ko-KR", "URL 커스터마이징" }, { "en-US", "Customize URL" } } },
                 { "EnterUrlCode", new Dictionary<string, string> { { "ko-KR", "URL에 사용할 코드를 입력하세요 (예: ac, kc):" }, { "en-US", "Enter URL code (e.g., ac, kc):" } } },
+                { "EnterFullUrl", new Dictionary<string, string> { { "ko-KR", "전체 URL을 입력하세요:" }, { "en-US", "Enter full URL:" } } },
                 { "UrlCustomized", new Dictionary<string, string> { { "ko-KR", "URL이 '{0}'(으)로 설정되었습니다." }, { "en-US", "URL set to '{0}'." } } },
                 { "CurrentUrl", new Dictionary<string, string> { { "ko-KR", "현재 URL: {0}" }, { "en-US", "Current URL: {0}" } } },
                 { "FontSize", new Dictionary<string, string> { { "ko-KR", "폰트" }, { "en-US", "Font Size" } } },
@@ -929,23 +930,24 @@ namespace FACTOVA_Launcher
                     XElement deploymentUrlElement = doc.Descendants("appSettings").Elements("add").FirstOrDefault(el => el.Attribute("key")?.Value == "DeploymentURL");
                     if (deploymentUrlElement != null)
                     {
-                        string urlUnitCode;
+                        string newUrl;
                         
                         // Check if custom URL mapping exists
                         if (settings.CustomUrlMappings != null && settings.CustomUrlMappings.ContainsKey(unitCode))
                         {
-                            urlUnitCode = settings.CustomUrlMappings[unitCode];
+                            newUrl = settings.CustomUrlMappings[unitCode];
+                            Log("UpdaterConfigChanged", newUrl);
                         }
                         else
                         {
                             // Default behavior: use first part before underscore
-                            urlUnitCode = unitCode.Split('_')[0];
+                            string urlUnitCode = unitCode.Split('_')[0];
+                            newUrl = $"http://{urlUnitCode.ToLower()}.gmes2.lge.com:8085";
+                            Log("UpdaterConfigChanged", urlUnitCode.ToUpper());
                         }
 
-                        string newUrl = $"http://{urlUnitCode.ToLower()}.gmes2.lge.com:8085";
                         deploymentUrlElement.SetAttributeValue("value", newUrl);
                         doc.Save(updaterConfigPath);
-                        Log("UpdaterConfigChanged", urlUnitCode.ToUpper());
                     }
 
                     File.Copy(sourcePath, destPath, true);
@@ -1042,29 +1044,30 @@ namespace FACTOVA_Launcher
             }
             else
             {
-                currentUrlCode = businessUnit.Split('_')[0];
+                string defaultCode = businessUnit.Split('_')[0];
+                currentUrlCode = $"http://{defaultCode.ToLower()}.gmes2.lge.com:8085";
             }
             
             MenuItem customizeUrlMenuItem = new MenuItem
             {
-                Header = GetLocalizedString("CustomizeUrl") + " " + GetLocalizedString("CurrentUrl", currentUrlCode.ToLower()),
+                Header = GetLocalizedString("CustomizeUrl"),
                 Tag = businessUnit
             };
             customizeUrlMenuItem.Click += (s, args) =>
             {
-                var dialog = new InputBoxRich(this, GetLocalizedString("CustomizeUrl"), currentUrlCode, false);
+                var dialog = new InputBoxRich(this, GetLocalizedString("EnterFullUrl"), currentUrlCode, false);
                 if (dialog.ShowDialog() == true)
                 {
-                    string newUrlCode = dialog.ResponseText.Trim();
-                    if (!string.IsNullOrWhiteSpace(newUrlCode))
+                    string newUrl = dialog.ResponseText.Trim();
+                    if (!string.IsNullOrWhiteSpace(newUrl))
                     {
                         if (settings.CustomUrlMappings == null)
                         {
                             settings.CustomUrlMappings = new Dictionary<string, string>();
                         }
-                        settings.CustomUrlMappings[businessUnit] = newUrlCode;
+                        settings.CustomUrlMappings[businessUnit] = newUrl;
                         SaveSettings();
-                        MessageBox.Show(GetLocalizedString("UrlCustomized", newUrlCode.ToLower()), "URL Customization", MessageBoxButton.OK, MessageBoxImage.Information);
+                        MessageBox.Show(GetLocalizedString("UrlCustomized", newUrl), "URL Customization", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                 }
             };
