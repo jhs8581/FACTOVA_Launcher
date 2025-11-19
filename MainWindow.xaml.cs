@@ -96,6 +96,7 @@ namespace FACTOVA_Launcher
                 { "AppStarted", new Dictionary<string, string> { { "ko-KR", "프로그램이 시작되었습니다." }, { "en-US", "Program started." } } },
                 { "BackupCompleted", new Dictionary<string, string> { { "ko-KR", "설정 백업 완료: {0}" }, { "en-US", "Settings backup completed: {0}" } } },
                 { "AutoBackupCompleted", new Dictionary<string, string> { { "ko-KR", "자동 백업 완료: {0}" }, { "en-US", "Auto backup completed: {0}" } } },
+                { "BackupSkipped", new Dictionary<string, string> { { "ko-KR", "외부에서 실행된 프로그램으로 백업을 건너뜁니다." }, { "en-US", "Backup skipped (externally launched process)." } } },
                 { "BackupError", new Dictionary<string, string> { { "ko-KR", "설정 파일 백업 오류: {0}" }, { "en-US", "Settings backup error: {0}" } } },
                 { "LauncherReset", new Dictionary<string, string> { { "ko-KR", "런처가 초기 상태로 돌아갑니다." }, { "en-US", "Launcher is reset to initial state." } } },
                 { "InvalidFolderName", new Dictionary<string, string> { { "ko-KR", "[경고] 잘못된 폴더 이름은 건너뜁니다: {0}" }, { "en-US", "[Warning] Skipping invalid folder name: {0}" } } },
@@ -123,7 +124,8 @@ namespace FACTOVA_Launcher
                 { "CurrentUrl", new Dictionary<string, string> { { "ko-KR", "현재 URL: {0}" }, { "en-US", "Current URL: {0}" } } },
                 { "FontSize", new Dictionary<string, string> { { "ko-KR", "폰트" }, { "en-US", "Font Size" } } },
                 { "DirectLaunch", new Dictionary<string, string> { { "ko-KR", "백업 없이 바로 실행" }, { "en-US", "Launch Without Backup" } } },
-                { "DirectLaunchCompleted", new Dictionary<string, string> { { "ko-KR", "백업 없이 실행: {0}" }, { "en-US", "Launched without backup: {0}" } } }
+                { "DirectLaunchCompleted", new Dictionary<string, string> { { "ko-KR", "백업 없이 실행: {0}" }, { "en-US", "Launched without backup: {0}" } } },
+                { "ProcessDetectedOnStartup", new Dictionary<string, string> { { "ko-KR", "실행 중인 프로세스를 감지했습니다. 버튼이 비활성화되었습니다." }, { "en-US", "Running process detected. Buttons have been disabled." } } }
             };
         }
 
@@ -292,6 +294,35 @@ namespace FACTOVA_Launcher
         private void TimeTimer_Tick(object sender, EventArgs e)
         {
             CurrentTimeTextBlock.Text = DateTime.Now.ToString("HH:mm:ss");
+            
+            // 운영 모드이고 모니터링 타이머가 실행 중이지 않을 때만 프로세스 감시
+            if (!isDevMode && !_monitorTimer.IsEnabled)
+            {
+                CheckForExternalProcessStart();
+            }
+        }
+
+        private void CheckForExternalProcessStart()
+        {
+            try
+            {
+                string processName = GetMainAppProcessName();
+                bool isProcessRunning = Process.GetProcessesByName(processName).Any();
+
+                // 프로세스가 실행 중이고, 런처에서 실행한 것이 아닌 경우
+                if (isProcessRunning && !_isMainAppRunning)
+                {
+                    _isMainAppRunning = true;
+                    NormalButtonContainer.IsEnabled = false;
+                    this.Title = "FACTOVA 실행기 - 프로그램 실행 중 (외부 실행)";
+                    _monitorTimer.Start();
+                    Log("ProcessDetectedOnStartup");
+                }
+            }
+            catch (Exception ex)
+            {
+                // 프로세스 감시 중 오류는 조용히 무시 (매 초마다 실행되므로)
+            }
         }
 
         private void MonitorTimer_Tick(object sender, EventArgs e)
@@ -324,6 +355,13 @@ namespace FACTOVA_Launcher
 
         private void BackupSettings()
         {
+            // _currentUnitCode가 null이면 백업하지 않음 (외부에서 실행된 경우)
+            if (string.IsNullOrEmpty(_currentUnitCode))
+            {
+                Log("BackupSkipped");
+                return;
+            }
+
             string lgeSettingsDir = GetLgeSettingsDir();
             string configFileName = GetConfigFileName();
             string sourcePath = Path.Combine(lgeSettingsDir, configFileName);
